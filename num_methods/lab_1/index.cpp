@@ -17,7 +17,7 @@ double f_prime(double x) {
     if (fabs(x) < 1e-10) {
         return numeric_limits<double>::infinity();
     }
-    return (x * (1 + 3 * pow(x, 2))) / (2 * pow(1 + 2 * pow(x, 2), 1.5));
+    return ((x / sqrt(1 + 2 * pow(x, 2))) - (x * (pow(x, 2) + 1)) / pow(2 * pow(x, 2) + 1, 1.5));
 }
 
 double f_double_prime(double x) {
