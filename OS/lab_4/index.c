@@ -25,49 +25,43 @@ void fcfs(Process proc[], int n) {
     int time = 0;
     float total_waiting = 0, total_turnaround = 0;
     printf("\n=== Планирование FCFS ===\n");
-    printf("Диаграмма Ганта:\n");
+    printf("Диаграмма Ганта:\n\n");
+    printf("--------------------------------------------------\n");
     for (int i = 0; i < n; i++) {
-        // Если процесс прибывает позже текущего времени, ждём его
-        if (time < proc[i].arrival_time)
-            time = proc[i].arrival_time;
         printf("| %s ", proc[i].id);
-        proc[i].waiting_time = time - proc[i].arrival_time;
+        proc[i].waiting_time = time;
         time += proc[i].burst_time;
-        proc[i].turnaround_time = time - proc[i].arrival_time;
+        proc[i].turnaround_time = time;
         total_waiting += proc[i].waiting_time;
         total_turnaround += proc[i].turnaround_time;
     }
     printf("|\n");
-    // Вывод шкалы времени
-    printf("Время: 0");
+    printf("--------------------------------------------------\n");
+    
     time = 0;
     for (int i = 0; i < n; i++) {
-        if (time < proc[i].arrival_time)
-            time = proc[i].arrival_time;
         time += proc[i].burst_time;
-        printf("   %d", time);
+        printf("| %d ", time);
     }
-    printf("\n");
-
-    // Табличный вывод результатов
-    printf("\nПроцесс\tBT\tAT\tWT\tTAT\n");
+    printf("|\n");
+    
+    printf("\nПроцесс\tBT\tWT\tTAT\n");
     for (int i = 0; i < n; i++) {
-        printf("%s\t%d\t%d\t%d\t%d\n", proc[i].id, proc[i].burst_time, proc[i].arrival_time, proc[i].waiting_time, proc[i].turnaround_time);
+        printf("%s\t%d\t%d\t%d\n", proc[i].id, proc[i].burst_time, proc[i].waiting_time, proc[i].turnaround_time);
     }
     printf("\nСреднее время ожидания: %.2f\nСреднее время оборота: %.2f\n", total_waiting / n, total_turnaround / n);
 }
+
 
 /*
  * Алгоритм SJF (Shortest Job First) – не прерываемый вариант.
  * Процессы сортируются по времени выполнения (burst_time).
  */
 void sjf(Process proc[], int n) {
-    // Создадим копию массива, чтобы не менять исходный порядок
     Process temp[NUM_PROCESSES];
     for (int i = 0; i < n; i++)
         temp[i] = proc[i];
 
-    // Сортировка по возрастанию времени выполнения
     for (int i = 0; i < n - 1; i++) {
         for (int j = i + 1; j < n; j++) {
             if (temp[i].burst_time > temp[j].burst_time) {
@@ -80,15 +74,13 @@ void sjf(Process proc[], int n) {
 
     int time = 0;
     float total_waiting = 0, total_turnaround = 0;
-    printf("\n=== Планирование SJF ===\n");
+    printf("\n=== Планирование SJF (без учета времени прибытия) ===\n");
     printf("Диаграмма Ганта:\n");
     for (int i = 0; i < n; i++) {
-        if (time < temp[i].arrival_time)
-            time = temp[i].arrival_time;
         printf("| %s ", temp[i].id);
-        temp[i].waiting_time = time - temp[i].arrival_time;
+        temp[i].waiting_time = time; // Время ожидания равно текущему времени
         time += temp[i].burst_time;
-        temp[i].turnaround_time = time - temp[i].arrival_time;
+        temp[i].turnaround_time = time; // Время оборота равно текущему времени
         total_waiting += temp[i].waiting_time;
         total_turnaround += temp[i].turnaround_time;
     }
@@ -96,16 +88,14 @@ void sjf(Process proc[], int n) {
     printf("Время: 0");
     time = 0;
     for (int i = 0; i < n; i++) {
-        if (time < temp[i].arrival_time)
-            time = temp[i].arrival_time;
         time += temp[i].burst_time;
         printf("   %d", time);
     }
     printf("\n");
 
-    printf("\nПроцесс\tBT\tAT\tWT\tTAT\n");
+    printf("\nПроцесс\tBT\tWT\tTAT\n");
     for (int i = 0; i < n; i++) {
-        printf("%s\t%d\t%d\t%d\t%d\n", temp[i].id, temp[i].burst_time, temp[i].arrival_time, temp[i].waiting_time, temp[i].turnaround_time);
+        printf("%s\t%d\t%d\t%d\n", temp[i].id, temp[i].burst_time, temp[i].waiting_time, temp[i].turnaround_time);
     }
     printf("\nСреднее время ожидания: %.2f\nСреднее время оборота: %.2f\n", total_waiting / n, total_turnaround / n);
 }
@@ -191,7 +181,8 @@ void priorityScheduling(Process proc[], int n) {
     int time = 0;
     float total_waiting = 0, total_turnaround = 0;
     printf("\n=== Приоритетное планирование (без AT) ===\n");
-    printf("Диаграмма Ганта:\n");
+    printf("Диаграмма Ганта:\n\n");
+    printf("--------------------------------------------------\n");
     for (int i = 0; i < n; i++) {
         printf("| %s(P%d) ", temp[i].id, temp[i].priority);
         temp[i].waiting_time = time; // AT = 0 для всех
@@ -274,18 +265,15 @@ void prioritySchedulingWithArrival(Process proc[], int n) {
 }
 
 int main() {
-    // Исходные данные из таблицы:
-    // Процессы: p1, p2, p3, p4, p5, p6, p7
-    // Burst Time: 5, 15, 9, 8, 8, 2, 4
-    // Приоритеты: 1, 3, 0, 4, 2, 1, 0  (чем меньше значение, тем выше приоритет)
+    //(чем меньше значение, тем выше приоритет)
     Process processes[NUM_PROCESSES] = {
-        {"p1", 5, 5, 0, 0, 1, 0, 0},
-        {"p2", 15,15, 0, 0, 3, 0, 0},
-        {"p3", 9, 9, 0, 0, 0, 0, 0},
-        {"p4", 8, 8, 0, 0, 4, 0, 0},
-        {"p5", 8, 8, 0, 0, 2, 0, 0},
-        {"p6", 2, 2, 0, 0, 1, 0, 0},
-        {"p7", 4, 4, 0, 0, 0, 0, 0}
+        {"p1", 3, 3, 0, 0, 1, 0, 0},
+        {"p2", 20,20, 0, 0, 4, 0, 0},
+        {"p3", 15, 15, 0, 0, 3, 0, 0},
+        {"p4", 10, 10, 0, 0, 2, 0, 0},
+        {"p5", 12, 12, 0, 0, 1, 0, 0},
+        {"p6", 8, 8, 0, 0, 1, 0, 0},
+        {"p7", 1, 1, 0, 0, 0, 1, 0}
     };
 
     // Для алгоритмов с учетом времени прибытия зададим условные значения AT

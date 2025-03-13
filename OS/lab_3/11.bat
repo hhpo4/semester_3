@@ -1,24 +1,37 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
 
+REM Проверка наличия двух параметров
 if "%~1"=="" (
-    echo Использование: %~nx0 ^<каталог1^> [каталог2 ...]
+    echo Ошибка: Не указан файл для исключения.
+    exit /b 1
+)
+if "%~2"=="" (
+    echo Ошибка: Не указан каталог-приемник.
     exit /b 1
 )
 
-set "logfile=delete_tmp.log"
-echo Удаление файлов .TMP - %DATE% %TIME% > "%logfile%"
+REM Установка переменных
+set "exclude_file=%~nx1"
+set "destination_dir=%~2"
 
-for %%D in (%*) do (
-    if exist "%%D" (
-        for %%F in ("%%D\*.TMP") do (
-            echo Удаляется: %%F >> "%logfile%"
-            del "%%F" || echo Ошибка удаления %%F >> "%logfile%"
+REM Проверка существования каталога-приемника
+if not exist "%destination_dir%" (
+    echo Ошибка: Каталог-приемник "%destination_dir%" не существует.
+    exit /b 1
+)
+
+REM Копирование файлов
+for %%f in (*.*) do (
+    if /i not "%%f"=="%exclude_file%" (
+        echo Копирование файла: %%f
+        xcopy /D /Y "%%f" "%destination_dir%"
+        if errorlevel 1 (
+            echo Ошибка при копировании файла: %%f
+            exit /b 1
         )
-    ) else (
-        echo Каталог не найден: %%D >> "%logfile%"
     )
 )
 
-echo Завершено. Лог: %logfile%
-exit /b 0
+echo Копирование завершено успешно.
+endlocal

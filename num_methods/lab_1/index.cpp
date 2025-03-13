@@ -21,11 +21,11 @@ double f_prime(double x) {
 }
 
 double f_double_prime(double x) {
-    return ((1 + 6 * pow(x, 2) + 6 * pow(x, 4)) / (2 * pow(1 + 2 * pow(x, 2), 2.5)));
+    return ((3 * pow(x, 2)) / (sqrt(2 * pow(x, 2) + 1) * pow(2 * pow(x, 2) + 1, 2)));
 }
 
 double f_triple_prime(double x) {
-    return (x * (9 + 54 * pow(x, 2) + 90 * pow(x, 4))) / (2 * pow(1 + 2 * pow(x, 2), 3.5));
+    return - ((18 * pow(x, 3) - 6*x) / (sqrt(2 * pow(x, 2) + 1) * pow(2 * pow(x, 2) + 1, 3)));
 }
 
 double dr1(double x, double h) {
@@ -70,7 +70,7 @@ int main() {
     cout << "Enter the number of nodes N: ";
     cin >> N;
     a = -4.0;
-    b = 4.0;
+    b = -2.5;
     h = (b - a) / N;
     if (h <= 0) {
         cerr << "Ошибка: шаг h должен быть положительным!" << endl;
