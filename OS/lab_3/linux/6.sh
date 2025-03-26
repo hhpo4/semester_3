@@ -8,7 +8,7 @@ read b
 
 # Вычисления
 sum=$((a + b))
-prod=$((a * b))
+prod=$((a * bb))
 sub=$((a - b))
 div=$((a / b))
 rem=$((a % b))

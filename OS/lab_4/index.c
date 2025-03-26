@@ -16,10 +16,14 @@ typedef struct {
     int completed;       // флаг завершения (для алгоритмов с учетом прибытия)
 } Process;
 
+int comparePriority(const void *a, const void *b) {
+    return ((Process *)a)->priority - ((Process *)b)->priority;
+}
+
+
 /*
  * Алгоритм FCFS (First Come First Served)
  * Если время прибытия не задано, считается, что все процессы прибывают в 0.
- * Выводится диаграмма Ганта, а также рассчитываются время ожидания и оборота.
  */
 void fcfs(Process proc[], int n) {
     int time = 0;
@@ -76,6 +80,7 @@ void sjf(Process proc[], int n) {
     float total_waiting = 0, total_turnaround = 0;
     printf("\n=== Планирование SJF (без учета времени прибытия) ===\n");
     printf("Диаграмма Ганта:\n");
+    printf("--------------------------------------------------\n");
     for (int i = 0; i < n; i++) {
         printf("| %s ", temp[i].id);
         temp[i].waiting_time = time; // Время ожидания равно текущему времени
@@ -85,7 +90,7 @@ void sjf(Process proc[], int n) {
         total_turnaround += temp[i].turnaround_time;
     }
     printf("|\n");
-    printf("Время: 0");
+    printf("--------------------------------------------------\n");
     time = 0;
     for (int i = 0; i < n; i++) {
         time += temp[i].burst_time;
@@ -105,105 +110,119 @@ void sjf(Process proc[], int n) {
  * Здесь моделируется работа алгоритма для разных значений кванта времени.
  */
 void roundRobin(Process proc[], int n, int quantum) {
-    // Копируем процессы, чтобы не изменять исходные данные
     Process temp[NUM_PROCESSES];
     for (int i = 0; i < n; i++) {
         temp[i] = proc[i];
         temp[i].remaining_time = temp[i].burst_time;
     }
 
-    int time = 0, done = 0;
+    int time = 0, done = 0, index = 0;
     float total_waiting = 0, total_turnaround = 0;
+    int gant_times[100]; // Хранение временных меток
+    char gant_processes[100][10]; // Хранение ID процессов
     printf("\n=== Round Robin (Квант = %d) ===\n", quantum);
     printf("Диаграмма Ганта:\n");
+    printf("--------------------------------------------------\n");
 
     // Пока не завершены все процессы
     while (done < n) {
         int executed = 0;
         for (int i = 0; i < n; i++) {
-            // Если процесс уже прибыл и ещё не завершён
-            if (temp[i].arrival_time <= time && temp[i].remaining_time > 0) {
+            if (temp[i].remaining_time > 0) {
+                gant_times[index] = time; // Сохранение времени перед процессом
+                strcpy(gant_processes[index], temp[i].id);
+                index++;
+
                 printf("| %s ", temp[i].id);
                 if (temp[i].remaining_time > quantum) {
                     time += quantum;
                     temp[i].remaining_time -= quantum;
                 } else {
                     time += temp[i].remaining_time;
-                    temp[i].waiting_time = time - temp[i].burst_time - temp[i].arrival_time;
-                    temp[i].turnaround_time = time - temp[i].arrival_time;
+                    temp[i].waiting_time = time - temp[i].burst_time;
+                    temp[i].turnaround_time = time;
                     temp[i].remaining_time = 0;
                     done++;
                 }
                 executed = 1;
             }
         }
-        // Если ни один процесс не готов, инкрементируем время
-        if (!executed)
+        if (!executed) {
             time++;
+        }
     }
-    printf("|\n");
+    printf("|\n--------------------------------------------------\n");
+
+    // Вывод временных меток
+    printf("%d", gant_times[0]); // Начальное время
+    for (int i = 1; i < index; i++) {
+        printf("   %d", gant_times[i]);
+    }
+    printf("   %d\n", time); // Конечное время
 
     for (int i = 0; i < n; i++) {
         total_waiting += temp[i].waiting_time;
         total_turnaround += temp[i].turnaround_time;
     }
 
-    printf("\nПроцесс\tBT\tAT\tWT\tTAT\n");
+    printf("\nПроцесс\tBT\tWT\tTAT\n");
     for (int i = 0; i < n; i++) {
-        printf("%s\t%d\t%d\t%d\t%d\n", temp[i].id, temp[i].burst_time, temp[i].arrival_time, temp[i].waiting_time, temp[i].turnaround_time);
+        printf("%s\t%d\t%d\t%d\n", temp[i].id, temp[i].burst_time, temp[i].waiting_time, temp[i].turnaround_time);
     }
     printf("\nСреднее время ожидания: %.2f\nСреднее время оборота: %.2f\n", total_waiting / n, total_turnaround / n);
 }
+
 
 /*
  * Алгоритм приоритетного планирования (без учёта времени прибытия).
  * Процессы сортируются по приоритету (чем меньше значение, тем выше приоритет).
  * Для каждого процесса выводится его приоритет.
+ * Если приоритет одинаковый, первый выполняется тот процесс, который прибыл первым.
  */
 void priorityScheduling(Process proc[], int n) {
-    Process temp[NUM_PROCESSES];
+    Process temp[n];
     for (int i = 0; i < n; i++) {
         temp[i] = proc[i];
-        // Если время прибытия не задано, считаем его равным 0
-        temp[i].arrival_time = 0;
     }
-    // Сортировка по приоритету (возрастание)
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (temp[i].priority > temp[j].priority) {
-                Process t = temp[i];
-                temp[i] = temp[j];
-                temp[j] = t;
-            }
-        }
-    }
+
+    // Сортировка по приоритету (меньшее значение приоритета = более высокий приоритет)
+    qsort(temp, n, sizeof(Process), comparePriority);
 
     int time = 0;
     float total_waiting = 0, total_turnaround = 0;
-    printf("\n=== Приоритетное планирование (без AT) ===\n");
-    printf("Диаграмма Ганта:\n\n");
+    int gant_times[n + 1];  // Для хранения временных меток
+    char gant_processes[n][10];  // Для хранения имен процессов
+
+    printf("\n=== Приоритетное планирование ===\n");
+    printf("Диаграмма Ганта:\n");
     printf("--------------------------------------------------\n");
+
     for (int i = 0; i < n; i++) {
-        printf("| %s(P%d) ", temp[i].id, temp[i].priority);
-        temp[i].waiting_time = time; // AT = 0 для всех
+        strcpy(gant_processes[i], temp[i].id);
+        gant_times[i] = time;
+
+        printf("| %s ", temp[i].id);
+        temp[i].waiting_time = time;
         time += temp[i].burst_time;
         temp[i].turnaround_time = time;
         total_waiting += temp[i].waiting_time;
         total_turnaround += temp[i].turnaround_time;
     }
-    printf("|\n");
-    printf("Время: 0");
-    time = 0;
-    for (int i = 0; i < n; i++) {
-        time += temp[i].burst_time;
-        printf("   %d", time);
+    gant_times[n] = time;  // Финальное время
+
+    printf("|\n--------------------------------------------------\n");
+
+    // Вывод временных меток под диаграммой
+    for (int i = 0; i <= n; i++) {
+        printf("%d   ", gant_times[i]);
     }
     printf("\n");
 
-    printf("\nПроцесс\tBT\tAT\tPriority\tWT\tTAT\n");
+    printf("\nПроцесс\tBT\tAT\tПриоритет\tWT\tTAT\n");
     for (int i = 0; i < n; i++) {
         printf("%s\t%d\t%d\t%d\t\t%d\t%d\n", temp[i].id, temp[i].burst_time, temp[i].arrival_time, temp[i].priority, temp[i].waiting_time, temp[i].turnaround_time);
     }
+
     printf("\nСреднее время ожидания: %.2f\nСреднее время оборота: %.2f\n", total_waiting / n, total_turnaround / n);
 }
 
@@ -212,57 +231,86 @@ void priorityScheduling(Process proc[], int n) {
  * Здесь на каждом шаге выбирается из процессов, которые уже прибыли и не завершены, тот,
  * у которого наивысший приоритет (минимальное значение priority).
  *
- * Механизм «старения» (aging) можно реализовать так:
+ * Механизм «старения» можно реализовать так:
  * на каждом такте времени для каждого процесса, находящегося в очереди (ожидает выполнения),
  * его значение приоритета корректируется (например, уменьшается на фиксированную величину или
  * вычисляется с учетом времени ожидания), что позволит процессам, которые долго ждут, повышать свои шансы на выполнение.
  */
 void prioritySchedulingWithArrival(Process proc[], int n) {
-    Process temp[NUM_PROCESSES];
+    Process temp[n];
     for (int i = 0; i < n; i++) {
         temp[i] = proc[i];
         temp[i].completed = 0;
     }
+
     int time = 0, completed = 0;
     float total_waiting = 0, total_turnaround = 0;
+    int gant_times[n];  // Временные метки (без начальной 0)
+    char gant_processes[n][10];  // Названия процессов
+    int gant_index = 0;
+
     printf("\n=== Приоритетное планирование (с учетом AT) ===\n");
-    printf("Диаграмма Ганта:\n");
+    printf("Диаграмма Ганта:\n--------------------------------------------------\n");
+
     while (completed < n) {
         int idx = -1;
-        int best_priority = 100000; // большое число для сравнения
-        // Выбираем процесс с наивысшим приоритетом из уже прибывших и не завершённых
+        int best_priority = 100000;
+        int min_arrival = 100000;
+
+        // Поиск доступного процесса с наивысшим приоритетом
         for (int i = 0; i < n; i++) {
             if (temp[i].arrival_time <= time && temp[i].completed == 0) {
-                // Здесь можно добавить корректировку приоритета (aging):
-                // Например, если процесс ждет слишком долго, можно уменьшить его приоритет.
-                // temp[i].priority = temp[i].priority - (time - temp[i].arrival_time) / aging_factor;
-                if (temp[i].priority < best_priority) {
+                if (temp[i].priority < best_priority ||
+                    (temp[i].priority == best_priority && temp[i].arrival_time < min_arrival)) {
                     best_priority = temp[i].priority;
+                    min_arrival = temp[i].arrival_time;
                     idx = i;
                 }
             }
         }
+
+        // Если нет доступных процессов, продвигаем время
         if (idx == -1) {
-            time++; // если ни один процесс не готов, инкрементируем время
+            time++;
             continue;
         }
-        printf("| %s(P%d) ", temp[idx].id, temp[idx].priority);
+
+        // Записываем диаграмму Ганта только после первого выполненного процесса
+        if (gant_index > 0) {
+            gant_times[gant_index - 1] = time;
+        }
+        strcpy(gant_processes[gant_index], temp[idx].id);
+        gant_index++;
+
+        printf("| %s ", temp[idx].id);
+
+        // Обновляем время ожидания и оборота
         temp[idx].waiting_time = time - temp[idx].arrival_time;
         time += temp[idx].burst_time;
         temp[idx].turnaround_time = time - temp[idx].arrival_time;
+
         total_waiting += temp[idx].waiting_time;
         total_turnaround += temp[idx].turnaround_time;
         temp[idx].completed = 1;
         completed++;
     }
-    printf("|\n");
+    gant_times[gant_index - 1] = time;  // Финальная временная отметка
+
+    printf("|\n--------------------------------------------------\n");
+
+    for (int i = 0; i < gant_index; i++) {
+        printf("%d\t", gant_times[i]);
+    }
+    printf("\n");
 
     printf("\nПроцесс\tBT\tAT\tPriority\tWT\tTAT\n");
     for (int i = 0; i < n; i++) {
         printf("%s\t%d\t%d\t%d\t\t%d\t%d\n", temp[i].id, temp[i].burst_time, temp[i].arrival_time, temp[i].priority, temp[i].waiting_time, temp[i].turnaround_time);
     }
+
     printf("\nСреднее время ожидания: %.2f\nСреднее время оборота: %.2f\n", total_waiting / n, total_turnaround / n);
 }
+
 
 int main() {
     //(чем меньше значение, тем выше приоритет)
@@ -273,7 +321,7 @@ int main() {
         {"p4", 10, 10, 0, 0, 2, 0, 0},
         {"p5", 12, 12, 0, 0, 1, 0, 0},
         {"p6", 8, 8, 0, 0, 1, 0, 0},
-        {"p7", 1, 1, 0, 0, 0, 1, 0}
+        {"p7", 1, 1, 0, 0, 0, 0, 0}
     };
 
     // Для алгоритмов с учетом времени прибытия зададим условные значения AT
