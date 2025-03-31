@@ -1,3 +1,4 @@
+// benchmark.h
 #ifndef BENCHMARK_H
 #define BENCHMARK_H
 
@@ -22,7 +23,7 @@ vector<T> generateRandomArray(int size) {
 }
 
 void runBenchmarks() {
-vector<int> sizes = {1000000, 1500000, 2000000, 2500000, 3000000};
+    vector<int> sizes = {1000000, 1500000, 2000000, 2500000, 3000000, 5000000};
     ofstream resultsFile("execution_times.txt");
     if (!resultsFile.is_open()) {
         cerr << "Ошибка: не удалось открыть файл для записи результатов!" << endl;
@@ -30,38 +31,38 @@ vector<int> sizes = {1000000, 1500000, 2000000, 2500000, 3000000};
     }
     
     for (int size : sizes) {
-        cout << "Создание массива размером " << size << "...\n";
         vector<double> arr = generateRandomArray<double>(size);
         int randomIndex = (rand() % size);
-        double desiredElement = (double)(MAX_ARRAY_ELEMENT + 1);
+        double desiredElement = MAX_ARRAY_ELEMENT + 1;
         arr[randomIndex] = desiredElement;
         
-        // Последовательный поиск
         auto startSeq = chrono::high_resolution_clock::now();
         int seqIndex = sequentialSearch(arr, desiredElement);
         auto endSeq = chrono::high_resolution_clock::now();
-        chrono::duration<double> seqDuration = endSeq - startSeq; // Микросекунды
+        chrono::duration<double, milli> seqDuration = endSeq - startSeq;
         
-        // Сортировка массива для бинарного поиска
-        cout << "Сортировка массива...\n";
-        // vector<int> sortedArr = arr;
         vector<double> sortedArr = arr;
         quickSort(sortedArr);
 
-        // Бинарный поиск
         auto startBin = chrono::high_resolution_clock::now();
         int binIndex = fibonacciSearch(sortedArr, desiredElement);
         auto endBin = chrono::high_resolution_clock::now();
-        chrono::duration<double> fibDuration = endBin - startBin; // Микросекунды
+        chrono::duration<double> binDuration = endBin - startBin;
         
-        // Запись результатов в файл
+        auto startInt = chrono::high_resolution_clock::now();
+        int intIndex = fibonacciSearch(sortedArr, desiredElement);
+        auto endInt = chrono::high_resolution_clock::now();
+        chrono::duration<double> intDuration = endInt - startInt;
+
         resultsFile << size << "," 
                     << seqDuration.count() << "," 
-                    << fibDuration.count() << "\n";
+                    << binDuration.count() << ","
+                    << intDuration.count() << "\n";
                     
         cout << "Размер: " << size << endl;
-        cout << "Последовательный поиск: индекс " << seqIndex << ", время: " << seqDuration.count() << " мкс" << endl;
-        cout << "Бинарный поиск: индекс " << binIndex << ", время: " << fibDuration.count() << " мкс" << endl;
+        cout << "Последовательный поиск: индекс " << seqIndex << ", время: " << seqDuration.count() << " сек" << endl;
+        cout << "Бинарный поиск: индекс " << binIndex << ", время: " << binDuration.count() << " сек" << endl;
+        cout << "Интерполяционный поиск: индекс " << intIndex << ", время: " << intDuration.count() << " сек" << endl;
         cout << "----------------------------------------------" << endl;
     }
     resultsFile.close();

@@ -49,4 +49,30 @@ int fibonacciSearch(const vector<T>& arr, const T& key) {
     return -1;
 }
 
+template<typename T>
+int interpolationSearch(const vector<T>& arr, int lo, int hi, const T& x) {
+    while (lo <= hi && x >= arr[lo] && x <= arr[hi]) {
+        if (lo == hi) {
+            return (arr[lo] == x) ? lo : -1;
+        }
+        
+        // Избегаем деления на ноль
+        if (arr[hi] == arr[lo]) {
+            return (arr[lo] == x) ? lo : -1;
+        }
+        
+        double pos_d = lo + ((double)(hi - lo) / (arr[hi] - arr[lo])) * (x - arr[lo]);
+        int pos = static_cast<int>(pos_d);
+        
+        if (arr[pos] == x)
+            return pos;
+            
+        if (arr[pos] < x)
+            lo = pos + 1;
+        else
+            hi = pos - 1;
+    }
+    return -1;
+}
+
 #endif
