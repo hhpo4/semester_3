@@ -359,8 +359,8 @@ int main() {
                 break;
             case 3: {
                 // Для алгоритма RR тестируем 5 различных квантов времени
-                int quanta[5] = {2, 4, 6, 8, 10};
-                for (int i = 0; i < 5; i++) {
+                int quanta[8] = {2, 4, 6, 8, 10, 12, 100, 200};
+                for (int i = 0; i < 8; i++) {
                     roundRobin(processes, NUM_PROCESSES, quanta[i]);
                     printf("--------------------------------------------------\n");
                 }

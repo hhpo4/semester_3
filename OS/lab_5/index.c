@@ -3,110 +3,139 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define BUFFER_SIZE 10  // размер буфера
+#define BUFFER_SIZE 5
 
-// Глобальные переменные для буфера и индексов
 int buffer[BUFFER_SIZE];
-int in = 0;      // индекс для записи
-int out = 0;     // индекс для чтения
-int count = 0;   // текущее количество элементов в буфере
+int count = 0; //текущее кол-во
+int head = 0;  // Указывает на первый занятый элемент
+int tail = 0;  // Указывает на первую свободную позицию
 
-// Объекты синхронизации
-CRITICAL_SECTION cs;
-HANDLE semEmpty; // семафор, отслеживающий количество свободных ячеек
-HANDLE semFull;  // семафор, отслеживающий количество заполненных ячеек
+CRITICAL_SECTION cs; // Критическая секция для синхронизации доступа к буферу
+HANDLE buffer_not_full; // Событие: буфер не полон
+HANDLE buffer_not_empty; // Событие: буфер не пуст
 
-// Функция-поток производителя
-DWORD WINAPI Producer(LPVOID lpParam) {
+// Функция для вывода состояния буфера
+void print_buffer() {
+    printf("Буфер: [");
+    for (int i = 0; i < BUFFER_SIZE; i++) {
+        printf("%d", buffer[i]);
+        if (i < BUFFER_SIZE - 1) printf(", ");
+    }
+    printf("], Заполненность: %.2f%%\n", (float)count / BUFFER_SIZE * 100);
+}
+
+DWORD WINAPI producer(LPVOID lpParam) {
     while (1) {
-        // Генерируем случайное число (например, четное)
-        int item = (rand() % 100) * 2;
-
-        // Ждем появления свободной ячейки
-        WaitForSingleObject(semEmpty, INFINITE);
-
-        // Заходим в критическую секцию для изменения общих переменных
         EnterCriticalSection(&cs);
-        
-        // Помещаем элемент в буфер по схеме кольцевого буфера
-        buffer[in] = item;
-        in = (in + 1) % BUFFER_SIZE;
+
+        while (count == BUFFER_SIZE) {
+            LeaveCriticalSection(&cs);
+            WaitForSingleObject(buffer_not_full, INFINITE);
+            EnterCriticalSection(&cs);
+        }
+
+        int number = (rand() % 3) + 1;
+        buffer[tail] = number;
+        tail = (tail + 1) % BUFFER_SIZE;
         count++;
 
-        // Вывод информации о работе производителя
-        printf("Producer produced: %d\n", item);
-        printf("Buffer: ");
-        for (int i = 0; i < BUFFER_SIZE; i++) {
-            printf("%d ", buffer[i]);
-        }
-        printf("\nBuffer usage: %d%% full\n\n", (count * 100) / BUFFER_SIZE);
-        
+        printf("Производитель: положил %d. ", number);
+        print_buffer();
+
+        SetEvent(buffer_not_empty);
         LeaveCriticalSection(&cs);
 
-        // Сигнализируем, что появился новый заполненный слот
-        ReleaseSemaphore(semFull, 1, NULL);
-
-        Sleep(500); // задержка для наглядности работы
+        Sleep(rand() % 2000 + 1000);
     }
     return 0;
 }
 
-// Функция-поток потребителя
-DWORD WINAPI Consumer(LPVOID lpParam) {
+
+DWORD WINAPI consumer(LPVOID lpParam) {
     while (1) {
-        // Ждем наличия заполненного слота
-        WaitForSingleObject(semFull, INFINITE);
-
-        // Заходим в критическую секцию для доступа к буферу
         EnterCriticalSection(&cs);
-        
-        int item = buffer[out];
-        out = (out + 1) % BUFFER_SIZE;
-        count--;
 
-        // Вывод информации о работе потребителя
-        printf("Consumer consumed: %d\n", item);
-        printf("Buffer: ");
-        for (int i = 0; i < BUFFER_SIZE; i++) {
-            printf("%d ", buffer[i]);
+        while (count == 0) {
+            LeaveCriticalSection(&cs);
+            WaitForSingleObject(buffer_not_empty, INFINITE);
+            EnterCriticalSection(&cs);
         }
-        printf("\nBuffer usage: %d%% full\n\n", (count * 100) / BUFFER_SIZE);
+
+        int searched_number = (rand() % 3);
+        int found_index = -1;
+        int current_pos = head;
+
+        // Поиск элемента в буфере
+        for (int i = 0; i < count; i++) {
+            if (buffer[current_pos] == searched_number) {
+                found_index = current_pos;
+                break;
+            }
+            current_pos = (current_pos + 1) % BUFFER_SIZE;
+        }
+
+        if (found_index != -1) {
+            // Удаляем найденный элемент
+            int pos = found_index;
+            while (pos != (tail - 1 + BUFFER_SIZE) % BUFFER_SIZE) {
+                int next = (pos + 1) % BUFFER_SIZE;
+                buffer[pos] = buffer[next];
+                pos = next;
+            }
+            tail = (tail - 1 + BUFFER_SIZE) % BUFFER_SIZE;
+            buffer[tail] = 0;
+            count--;
+
+            printf("Потребитель: взял %d. ", searched_number);
+            print_buffer();
+
+            SetEvent(buffer_not_full);
+        } else {
+            printf("Потребитель: число %d не найдено. ", searched_number);
+            print_buffer();
+            
+            // Даем шанс производителю добавить элементы
+            LeaveCriticalSection(&cs);
+            Sleep(100);
+            continue;
+        }
 
         LeaveCriticalSection(&cs);
-
-        // Сигнализируем, что появился новый свободный слот
-        ReleaseSemaphore(semEmpty, 1, NULL);
-
-        Sleep(800); // задержка для имитации разной скорости работы
     }
     return 0;
 }
 
 int main() {
-    // Инициализация генератора случайных чисел
-    srand((unsigned int)time(NULL));
+    srand(time(NULL)); // Инициализация генератора случайных чисел
 
     // Инициализация критической секции
     InitializeCriticalSection(&cs);
 
-    // Создаем семафоры:
-    // semEmpty начинается со значением BUFFER_SIZE, т.к. изначально все ячейки свободны
-    semEmpty = CreateSemaphore(NULL, BUFFER_SIZE, BUFFER_SIZE, NULL);
-    // semFull начинается с 0, так как буфер изначально пуст
-    semFull = CreateSemaphore(NULL, 0, BUFFER_SIZE, NULL);
+    // Создание событий
+    buffer_not_full = CreateEvent(NULL, FALSE, TRUE, NULL); // Буфер изначально не полон
+    buffer_not_empty = CreateEvent(NULL, FALSE, FALSE, NULL); // Буфер изначально пуст
 
-    // Создаем потоки производителя и потребителя
-    HANDLE hProducer = CreateThread(NULL, 0, Producer, NULL, 0, NULL);
-    HANDLE hConsumer = CreateThread(NULL, 0, Consumer, NULL, 0, NULL);
+    // Инициализация буфера нулями
+    for (int i = 0; i < BUFFER_SIZE; i++) {
+        buffer[i] = 0;
+    }
 
-    // Ожидаем завершения потоков (в данном примере потоки работают бесконечно)
-    WaitForSingleObject(hProducer, INFINITE);
-    WaitForSingleObject(hConsumer, INFINITE);
+    // Создание потоков
+    HANDLE producer_thread = CreateThread(NULL, 0, producer, NULL, 0, NULL);
+    HANDLE consumer_thread = CreateThread(NULL, 0, consumer, NULL, 0, NULL);
 
-    // Очистка ресурсов
+    // Ожидание завершения потоков (в данном случае они работают бесконечно)
+    WaitForSingleObject(producer_thread, INFINITE);
+    WaitForSingleObject(consumer_thread, INFINITE);
+
+    // Закрытие дескрипторов
+    CloseHandle(producer_thread);
+    CloseHandle(consumer_thread);
+    CloseHandle(buffer_not_full);
+    CloseHandle(buffer_not_empty);
+
+    // Удаление критической секции
     DeleteCriticalSection(&cs);
-    CloseHandle(semEmpty);
-    CloseHandle(semFull);
 
     return 0;
 }
