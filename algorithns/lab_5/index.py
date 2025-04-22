@@ -28,7 +28,7 @@ fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 fig.suptitle("Анализ производительности двусвязного списка")
 
 # Экспериментальное время вставки
-axes[0, 0].plot(sizes, experimental_insert, label="Insert (Experimental)", marker='o', linestyle='--')
+axes[0, 0].plot(sizes, theoretical_insert, label="Insert (Experimental)", marker='o', linestyle='--')
 axes[0, 0].set_xlabel("Размер списка")
 axes[0, 0].set_ylabel("Время (сек)")
 axes[0, 0].set_title("Экспериментальное время вставки")
@@ -52,7 +52,7 @@ axes[1, 0].legend()
 axes[1, 0].grid(True)
 
 # Теоретическое время удаления
-axes[1, 1].plot(sizes, theoretical_remove, label="Remove (Theoretical O(log n))", marker='x', linestyle=':')
+axes[1, 1].plot(sizes, theoretical_remove, label="Remove (Theoretical O(n))", marker='x', linestyle=':')
 axes[1, 1].set_xlabel("Размер списка")
 axes[1, 1].set_ylabel("Время (сек)")
 axes[1, 1].set_title("Теоретическое время удаления")

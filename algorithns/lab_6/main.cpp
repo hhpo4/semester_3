@@ -1,14 +1,11 @@
 #include <iostream>
-#include <deque>
+#include <list>
 #include <algorithm>
-#include <numeric>
 
-// Пользовательский тип
 struct CustomType {
     int value;
     CustomType(int v) : value(v) {}
     bool operator<(const CustomType& other) const { return value < other.value; }
-    bool operator>(const CustomType& other) const { return value > other.value; }
     bool operator==(const CustomType& other) const { return value == other.value; }
 };
 
@@ -17,49 +14,52 @@ std::ostream& operator<<(std::ostream& os, const CustomType& obj) {
 }
 
 int main() {
-    std::deque<CustomType> dq = { 3, 7, 1, 9, 2, 8, 4 };
+    std::list<CustomType> lst = {3, 0, -1, 0, 5, -3, 2, 0, 6};
 
-    // Вывод исходного контейнера
-    std::cout << "Исходный контейнер: ";
-    for (const auto& el : dq) std::cout << el << " ";
+    std::cout << "Исходный список: ";
+    for (const auto& el : lst) std::cout << el << " ";
     std::cout << "\n";
 
-    // Заменить максимальный элемент минимальным
-    auto min_it = std::min_element(dq.begin(), dq.end());
-    auto max_it = std::max_element(dq.begin(), dq.end());
-    if (min_it != dq.end() && max_it != dq.end()) {
-        std::replace(dq.begin(), dq.end(), *max_it, *min_it);
+    // 2. Заменить все элементы с нулевымс значением на 1
+    for (auto& el : lst) {
+        if (el.value == 0) {
+            el.value = 1;
+        }
     }
 
-    std::cout << "После замены макс. элемента мин.: ";
-    for (const auto& el : dq) std::cout << el << " ";
+    std::cout << "После замены 0 на 1: ";
+    for (const auto& el : lst) std::cout << el << " ";
     std::cout << "\n";
 
-    // Удалить все элементы, меньшие среднего арифметического
-    double avg = std::accumulate(dq.begin(), dq.end(), 0.0, [](double sum, const CustomType& el) { return sum + el.value; }) / dq.size();
-    dq.erase(std::remove_if(dq.begin(), dq.end(), [avg](const CustomType& el) { return el.value < avg; }), dq.end());
+    // 3. Удалить по два элемента из начала и конца
+    for (int i = 0; i < 2 && !lst.empty(); ++i) lst.pop_front();
+    for (int i = 0; i < 2 && !lst.empty(); ++i) lst.pop_back();
 
-    std::cout << "После удаления элементов < " << avg << ": ";
-    for (const auto& el : dq) std::cout << el << " ";
+    std::cout << "После удаления по 2 элемента с начала и конца: ";
+    for (const auto& el : lst) std::cout << el << " ";
     std::cout << "\n";
 
-    // Сортировать по убыванию
-    std::sort(dq.begin(), dq.end(), std::greater<>());
-    std::cout << "После сортировки по убыванию: ";
-    for (const auto& el : dq) std::cout << el << " ";
+    // 4. Сортировка по возрастанию
+    lst.sort();
+
+    std::cout << "После сортировки по возрастанию: ";
+    for (const auto& el : lst) std::cout << el << " ";
     std::cout << "\n";
 
-    // Найти медиану
-    if (!dq.empty()) {
-        CustomType median = dq[dq.size() / 2];
-        std::cout << "Медиана: " << median << "\n";
+    // 5. Подсчёт количества отрицательных элементов
+    int negativeCount = std::count_if(lst.begin(), lst.end(), [](const CustomType& el) {
+        return el.value < 0;
+    });
+    std::cout << "Количество отрицательных элементов: " << negativeCount << "\n";
+
+    // 6. К каждому элементу добавить 1
+    for (auto& el : lst) {
+        el.value += 1;
     }
 
-    // Изменить знак каждого элемента
-    std::transform(dq.begin(), dq.end(), dq.begin(), [](CustomType& el) { return CustomType(-el.value); });
-    std::cout << "После изменения знака: ";
-    for (const auto& el : dq) std::cout << el << " ";
+    std::cout << "После увеличения каждого элемента на 1: ";
+    for (const auto& el : lst) std::cout << el << " ";
     std::cout << "\n";
-    
+
     return 0;
 }
