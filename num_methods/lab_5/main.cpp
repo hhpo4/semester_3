@@ -5,7 +5,7 @@
 
 using namespace std;
 
-// Функция, описывающая систему дифференциальных уравнений
+// Функция, описывающая систему дифференциальных уравнений 12
 vector<double> f(double x, const vector<double>& F) {
     double y = F[0];  // Текущее значение y
     double z = F[1];  // Текущее значение z
@@ -95,7 +95,7 @@ void rk_4th(double x0, double xf, double h, vector<double>& F0, const string& fi
 int main() {
     const double x0 = 0.0;
     const double xf = 1.0;
-    const double h = 0.01;
+    const double h = 0.1;  
     vector<double> initial_F = { 0.5, 1.0 };  // Начальные условия y(0)=0.5, z(0)=1
 
     while (true) {

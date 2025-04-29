@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 
-def read_data_from_file(filename="rk2_results.txt"):
-  
+filename_rk2 = "rk2_results.txt"
+filename_rk4 = "rk4_results.txt"
+
+def read_data_from_file(filename=filename_rk4):
     data = []
     try:
         with open(filename, 'r') as f:
@@ -30,7 +32,7 @@ def read_data_from_file(filename="rk2_results.txt"):
     
     return data
 
-def plot_data(data, title="Результаты Рунге-Кутты 2-го порядка"):
+def plot_data(data, title="Результаты Рунге-Кутты"):
    
     if not data:
         print("Нет данных для построения графика.")
