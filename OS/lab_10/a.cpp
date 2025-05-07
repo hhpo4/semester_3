@@ -12,7 +12,7 @@ int main() {
     }
     std::cout << "Memory reserved at: " << mem << std::endl;
 
-    // 2. Выделяем физическую память
+    // 2. Выделяем физическую память в зарезервированном регионе
     mem = VirtualAlloc(mem, 4096, MEM_COMMIT, PAGE_READWRITE);
     if (!mem) {
         std::cerr << "VirtualAlloc (commit) failed: " << GetLastError() << std::endl;
@@ -25,7 +25,7 @@ int main() {
     numbers[0] = 42;
     std::cout << "Value written to memory: " << numbers[0] << std::endl;
 
-    // 4. Освобождаем физическую память
+    // 4. Освобождаем физическую память, сохраняется регион
     if (!VirtualFree(mem, 4096, MEM_DECOMMIT)) {
         std::cerr << "VirtualFree (decommit) failed: " << GetLastError() << std::endl;
         return 1;

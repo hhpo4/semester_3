@@ -7,48 +7,42 @@
 
 using namespace std;
 
-// Класс для представления неориентированного взвешенного графа
+// неориентированный взвешенный
+
 class Graph {
 private:
-    // Список смежности: хеш-таблица (вершина -> соседи с весами)
+    // Список смежности: хеш-таблица (вершина - соседи с весами)
     unordered_map<int, unordered_map<int, int>> adjacency_list;
     
 public:
-    // Добавление ребра в граф (неориентированное)
     void addEdge(int node1, int node2, int weight) {
         adjacency_list[node1][node2] = weight;
         adjacency_list[node2][node1] = weight;
     }
     
-    // Получение соседей вершины
     const unordered_map<int, int>& getNeighbors(int node) const {
         static const unordered_map<int, int> empty; // Для случая, если вершины нет
         auto it = adjacency_list.find(node);
         return (it != adjacency_list.end()) ? it->second : empty;
     }
     
-    // Алгоритм Дейкстры для поиска кратчайшего пути
     void dijkstra(int start_node) const {
         // Приоритетная очередь для выбора вершины с минимальным расстоянием
         priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
         
-        // Храним расстояния до всех вершин (инициализируем бесконечностью)
         unordered_map<int, int> distances;
         for (const auto& pair : adjacency_list) {
             distances[pair.first] = numeric_limits<int>::max();
         }
         
-        // Храним предыдущие вершины для восстановления пути
         unordered_map<int, int> previous;
         
-        // Начальная вершина имеет расстояние 0
         distances[start_node] = 0;
         pq.push({0, start_node});
         
         cout << "Начинаем алгоритм Дейкстры с вершины " << start_node << endl;
         
         while (!pq.empty()) {
-            // Извлекаем вершину с минимальным расстоянием
             int current_node = pq.top().second;
             int current_distance = pq.top().first;
             pq.pop();
