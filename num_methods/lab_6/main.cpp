@@ -10,6 +10,10 @@ double func(double x) {
     return pow(sin(x), 2) - 2 * tan(x);
 }
 
+double func_test(double x) {
+    return cos(x);
+}
+
 pair<double, double> goldenSectionMin(const function<double(double)>& f, double a, double b, double eps) {
     const double phi = (sqrt(5.0) - 1) / 2;  // ≈0.618034
     double x1 = b - phi * (b - a);
@@ -47,7 +51,7 @@ pair<double, double> goldenSectionMax(const function<double(double)>& f, double 
 int main() {
     double eps = 1e-5;
     // Разбиение [0,2] на сегменты из-за разрыва tan(x) при x≈1.5708
-    vector<pair<double, double>> segments = {make_pair(0.0, 1.56), make_pair(1.58, 2.0)};
+    // vector<pair<double, double>> segments = {make_pair(0.0, 1.56), make_pair(1.58, 2.0)};
     ofstream outFile("extrema_results.txt");
     if (!outFile) {
         cerr << "Ошибка открытия файла для записи результатов." << endl;
@@ -55,15 +59,18 @@ int main() {
     }
     cout << "Поиск экстремумов функции f(x)=sin^2(x)-2*tan(x) на [0,2]" << endl;
     int countFound = 0;
+     
+    vector<pair<double, double>> segments = {make_pair(0, 6)};
+
     for (const auto& seg : segments) {
         double a = seg.first;
         double b = seg.second;
         
-        pair<double, double> minResult = goldenSectionMin(func, a, b, eps);
+        pair<double, double> minResult = goldenSectionMin(func_test, a, b, eps);
         double xMin = minResult.first;
         double fMin = minResult.second;
         
-        pair<double, double> maxResult = goldenSectionMax(func, a, b, eps);
+        pair<double, double> maxResult = goldenSectionMax(func_test, a, b, eps);
         double xMax = maxResult.first;
         double fMax = maxResult.second;
         
@@ -76,6 +83,7 @@ int main() {
         countFound += 2;
         if (countFound >= 3) break;
     }
+
     outFile.close();
     return 0;
 }

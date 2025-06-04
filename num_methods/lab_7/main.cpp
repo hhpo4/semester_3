@@ -93,9 +93,9 @@ vector<double> steepest_descent(double theta_init, double y2_init, int max_iter 
 int main() {
     // Начальные приближения (можно варьировать для поиска разных минимумов)
     vector<double> initial_points[] = {
-        {0.5, 1.0},   // Первое начальное приближение
-        {1.5, 1.5},   // Второе начальное приближение
-        {-0.5, 0.5}   // Третье начальное приближение
+        {0.5, 1.0},   
+        {1.5, 1.5},  
+        {-0.5, 0.5}  
     };
     
     for (auto &init : initial_points) {
