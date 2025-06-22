@@ -84,9 +84,9 @@ double newton_method(double k0, double h, double epsilon, double dk, int max_ite
             break;
         }
         
-        double y1_perturbed = solve_ode(k + dk, h, false, "");
-        double F_perturbed = y1_perturbed + 1.0;
-        double dFdk = (F_perturbed - F) / dk;
+        double y1_changed = solve_ode(k + dk, h, true, "changed_" + to_string(i) + ".txt");
+        double F_changed = y1_changed + 1.0; //Ошибка для промежуточного параметра
+        double dFdk = (F_changed - F) / dk;
         
         k = k - F / dFdk;
     }
@@ -96,8 +96,8 @@ double newton_method(double k0, double h, double epsilon, double dk, int max_ite
 int main() {
     double h = 0.01;
     double epsilon = 1e-6;
-    double dk = 1e-4;
-    double k0 = 0.0;
+    double dk = 0.1;
+    double k0 = 0;
     
     // 1. Запуск метода Ньютона для подбора k
     double k_final = newton_method(k0, h, epsilon, dk, 100);

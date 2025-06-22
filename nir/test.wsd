@@ -1,0 +1,33 @@
+@startuml
+' Установка стиля
+skinparam node {
+    BackgroundColor<<docker>> #DCE6F1
+    BackgroundColor<<local>> #E2F0CB
+    BorderColor black
+}
+
+' Узлы
+node "Хост-машина разработчика" <<local>> {
+    node "Docker контейнер" <<docker>> {
+        node "Backend" {
+            artifact "NestJS Application"
+        }
+        node "PostgreSQL" {
+            artifact "PostgreSQL DB"
+        }
+        node "Liquibase" {
+            artifact "Liquibase Migrations"
+        }
+    }
+
+    node "Frontend" <<local>> {
+        artifact "React App"
+    }
+}
+
+' Связи
+"React App" --> "NestJS Application" : HTTP запросы
+"NestJS Application" --> "PostgreSQL DB" : SQL-запросы
+"Liquibase Migrations" --> "PostgreSQL DB" : Миграции
+
+@enduml
